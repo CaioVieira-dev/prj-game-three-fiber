@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react";
-import { Canvas, useFrame, MeshProps, useThree, Vector3 } from "@react-three/fiber";
+import { Canvas, useFrame, MeshProps, useThree } from "@react-three/fiber";
 // import { OrbitControls } from '@react-three/drei'
 
 import './styles.scss';
