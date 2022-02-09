@@ -1,9 +1,10 @@
 import { useRef, useEffect, useState } from "react";
-import { Canvas, useFrame, MeshProps } from "@react-three/fiber";
+import { Canvas, useFrame, MeshProps, useThree, Vector3 } from "@react-three/fiber";
 // import { OrbitControls } from '@react-three/drei'
 
 import './styles.scss';
 
+type controlsType = { left: Boolean, right: Boolean, up: Boolean, down: Boolean }
 
 const usePlayerControls = () => {
     const [left, setLeft] = useState(false)
@@ -35,10 +36,21 @@ const usePlayerControls = () => {
     }, [])
     return { left, right, up, down }
 }
+function useCamera({ left, right, up, down }: controlsType) {
+    const { camera } = useThree()
+    useFrame(() => {
+
+        const lastPos = camera.position;
+        const x = lastPos.x + (left ? -0.1 : 0) + (right ? 0.1 : 0)
+        const z = lastPos.z + (up ? -0.1 : 0) + (down ? 0.1 : 0)
+        camera.position.set(x, lastPos.y, z)
+    })
+}
 
 function Cube() {
     const meshRef = useRef<MeshProps>(null);
     const { left, right, up, down } = usePlayerControls();
+    useCamera({ left, right, up, down })
 
     useFrame(({ clock }) => {
         meshRef.current!.rotation.x = clock.getElapsedTime()
@@ -60,7 +72,6 @@ function Plane() {
     return <mesh position={[0, -3, 0]} rotation={[(-Math.PI / 2), 0, 0]}>
         <planeGeometry args={[10, 10]} />
         <meshStandardMaterial color='gray' />
-
     </mesh>
 }
 
