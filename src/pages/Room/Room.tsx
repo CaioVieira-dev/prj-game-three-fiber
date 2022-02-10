@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { Canvas, useFrame, MeshProps, useThree } from '@react-three/fiber';
+import { Canvas, useFrame, MeshProps, useThree, Vector3 } from '@react-three/fiber';
 // import { OrbitControls } from '@react-three/drei'
 
 import './styles.scss';
@@ -35,14 +35,28 @@ const usePlayerControls = () => {
   }, []);
   return { left, right, up, down };
 };
+
 function useCamera({ left, right, up, down }: controlsType) {
   const { camera } = useThree();
   useFrame(() => {
-    const lastPos = camera.position;
-    const x = lastPos.x + (left ? -0.1 : 0) + (right ? 0.1 : 0);
-    const z = lastPos.z + (up ? -0.1 : 0) + (down ? 0.1 : 0);
-    camera.position.set(x, lastPos.y, z);
+    const { x, y, z } = handleMovement({
+      position: { x: camera.position.x, y: camera.position.y, z: camera.position.z },
+      inputs: { left, right, up, down },
+    });
+    camera.position.set(x, y, z);
   });
+}
+type handleMovementArgs = {
+  position: Vector3;
+  inputs: controlsType;
+};
+
+function handleMovement({ position, inputs }: handleMovementArgs) {
+  const newX = position.x + (inputs.left ? -0.1 : 0) + (inputs.right ? 0.1 : 0);
+  const newZ = position.z + (inputs.up ? -0.1 : 0) + (inputs.down ? 0.1 : 0);
+  const newY = position.y;
+
+  return { x: newX, y: newY, z: newZ };
 }
 
 function Cube() {
@@ -54,10 +68,11 @@ function Cube() {
     meshRef.current!.rotation.x = clock.getElapsedTime();
     meshRef.current!.rotation.y = clock.getElapsedTime();
 
-    const lastPos = meshRef.current!.position;
-    const x = lastPos.x + (left ? -0.1 : 0) + (right ? 0.1 : 0);
-    const z = lastPos.z + (up ? -0.1 : 0) + (down ? 0.1 : 0);
-    meshRef.current!.position.set(x, lastPos.y, z);
+    const { x, y, z } = handleMovement({
+      position: { x: meshRef.current!.position.x, y: meshRef.current!.position.y, z: meshRef.current!.position.z },
+      inputs: { left, right, up, down },
+    });
+    meshRef.current!.position.set(x, y, z);
   });
   return (
     <mesh ref={meshRef}>
