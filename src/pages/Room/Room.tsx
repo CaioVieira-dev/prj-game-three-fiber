@@ -52,9 +52,9 @@ type handleMovementArgs = {
 };
 
 function handleMovement({ position, inputs }: handleMovementArgs) {
-  const newX = position.x + (inputs.left ? -0.1 : 0) + (inputs.right ? 0.1 : 0);
-  const newZ = position.z + (inputs.up ? -0.1 : 0) + (inputs.down ? 0.1 : 0);
-  const newY = position.y;
+  const newX: Number = position.x + (inputs.left ? -0.1 : 0) + (inputs.right ? 0.1 : 0);
+  const newZ: Number = position.z + (inputs.up ? -0.1 : 0) + (inputs.down ? 0.1 : 0);
+  const newY: Number = position.y;
 
   return { x: newX, y: newY, z: newZ };
 }
