@@ -44,6 +44,7 @@ function useCamera({ left, right, up, down }: controlsType) {
       inputs: { left, right, up, down },
     });
     camera.position.set(x, y, z);
+    // camera.lookAt(x + 3, y - 3, z);
   });
 }
 type handleMovementArgs = {
@@ -52,9 +53,9 @@ type handleMovementArgs = {
 };
 
 function handleMovement({ position, inputs }: handleMovementArgs) {
-  const newX: Number = position.x + (inputs.left ? -0.1 : 0) + (inputs.right ? 0.1 : 0);
-  const newZ: Number = position.z + (inputs.up ? -0.1 : 0) + (inputs.down ? 0.1 : 0);
-  const newY: Number = position.y;
+  const newX: number = position.x + (inputs.left ? -0.1 : 0) + (inputs.right ? 0.1 : 0);
+  const newZ: number = position.z + (inputs.up ? -0.1 : 0) + (inputs.down ? 0.1 : 0);
+  const newY: number = position.y;
 
   return { x: newX, y: newY, z: newZ };
 }
