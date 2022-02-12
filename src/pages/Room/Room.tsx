@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Canvas, useFrame, MeshProps, useThree, Vector3 } from '@react-three/fiber';
 // import { OrbitControls } from '@react-three/drei'
+import { Physics, usePlane, useBox, PlaneProps, BoxProps } from '@react-three/cannon';
 
 import './styles.scss';
 
@@ -85,8 +86,8 @@ function handleMovement({ position, inputs }: handleMovementArgs) {
   return { x: newX, y: newY, z: newZ };
 }
 
-function Cube() {
-  const meshRef = useRef<MeshProps>(null);
+function Cube(props: BoxProps) {
+  const [meshRef] = useBox(() => ({ mass: 1, position: [0, 5, 0], ...props }));
   const { left, right, up, down } = usePlayerControls();
   useCamera(meshRef);
 
@@ -102,15 +103,16 @@ function Cube() {
   });
   return (
     <mesh ref={meshRef}>
-      <boxGeometry args={[1, 1, 1]} />
+      <boxGeometry />
       <meshStandardMaterial />
     </mesh>
   );
 }
 
-function Plane() {
+function Plane(props: PlaneProps) {
+  const [ref] = usePlane(() => ({ rotation: [-Math.PI / 2, 0, 0], ...props }));
   return (
-    <mesh position={[0, -3, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+    <mesh ref={ref}>
       <planeGeometry args={[10, 10]} />
       <meshStandardMaterial color="gray" />
     </mesh>
@@ -123,8 +125,10 @@ export function Room() {
       <Canvas>
         <ambientLight intensity={0.1} />
         <directionalLight color="red" position={[0, 3, 5]} />
-        <Cube />
-        <Plane />
+        <Physics>
+          <Cube args={[1, 1, 1]} />
+          <Plane position={[0, -3, 0]} rotation={[-Math.PI / 2, 0, 0]} />
+        </Physics>
         {/* <OrbitControls /> */}
       </Canvas>
     </div>
