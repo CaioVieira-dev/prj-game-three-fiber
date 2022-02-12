@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Canvas, useFrame, MeshProps, useThree, Vector3 } from '@react-three/fiber';
 // import { OrbitControls } from '@react-three/drei'
 
@@ -36,16 +36,41 @@ const usePlayerControls = () => {
   return { left, right, up, down };
 };
 
-function useCamera({ left, right, up, down }: controlsType) {
+function useCamera(playerRef: MeshProps) {
   const { camera } = useThree();
-  useFrame(() => {
-    const { x, y, z } = handleMovement({
-      position: { x: camera.position.x, y: camera.position.y, z: camera.position.z },
-      inputs: { left, right, up, down },
-    });
-    camera.position.set(x, y, z);
-    // camera.lookAt(x + 3, y - 3, z);
+  const sizes = useRef({
+    width: window.innerWidth,
+    height: window.innerHeight,
   });
+  const cursor = useRef({
+    x: 0,
+    y: 0,
+  });
+
+  useFrame(() => {
+    const camX = Math.sin(cursor.current.x * Math.PI) * 5 + playerRef.current.position.x;
+    const camZ = Math.cos(cursor.current.x * Math.PI) * 5 + playerRef.current.position.z;
+    const camY = cursor.current.y * 3 + playerRef.current.position.y;
+    camera.position.set(camX, camY, camZ);
+    camera.lookAt(playerRef.current.position);
+  });
+
+  useEffect(() => {
+    function handleMouseMove(this: Document, ev: MouseEvent) {
+      cursor.current.x = ev.clientX / sizes.current.width - 0.5;
+      cursor.current.y = ev.clientY / sizes.current.height - 0.5;
+    }
+    function handleWindowResize() {
+      sizes.current = { width: window.innerWidth, height: window.innerHeight };
+    }
+
+    document.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('resize', handleWindowResize);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('resize', handleWindowResize);
+    };
+  }, []);
 }
 type handleMovementArgs = {
   position: Vector3;
@@ -63,7 +88,7 @@ function handleMovement({ position, inputs }: handleMovementArgs) {
 function Cube() {
   const meshRef = useRef<MeshProps>(null);
   const { left, right, up, down } = usePlayerControls();
-  useCamera({ left, right, up, down });
+  useCamera(meshRef);
 
   useFrame(({ clock }) => {
     meshRef.current!.rotation.x = clock.getElapsedTime();
