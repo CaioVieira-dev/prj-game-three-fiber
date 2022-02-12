@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Canvas, useFrame, MeshProps, useThree, Vector3 } from '@react-three/fiber';
+import { Canvas, useFrame, useThree, Vector3 } from '@react-three/fiber';
 // import { OrbitControls } from '@react-three/drei'
 import { Physics, usePlane, useBox, PlaneProps, BoxProps } from '@react-three/cannon';
 
@@ -37,7 +37,7 @@ const usePlayerControls = () => {
   return { left, right, up, down };
 };
 
-function useCamera(playerRef: MeshProps) {
+function useCamera([x, y, z]: number[]) {
   const { camera } = useThree();
   const sizes = useRef({
     width: window.innerWidth,
@@ -49,11 +49,11 @@ function useCamera(playerRef: MeshProps) {
   });
 
   useFrame(() => {
-    const camX = Math.sin(cursor.current.x * Math.PI) * 5 + playerRef.current.position.x;
-    const camZ = Math.cos(cursor.current.x * Math.PI) * 5 + playerRef.current.position.z;
-    const camY = cursor.current.y * 3 + playerRef.current.position.y;
+    const camX = Math.sin(cursor.current.x * Math.PI) * 5 + x;
+    const camZ = Math.cos(cursor.current.x * Math.PI) * 5 + z;
+    const camY = cursor.current.y * 3 + y;
     camera.position.set(camX, camY, camZ);
-    camera.lookAt(playerRef.current.position);
+    camera.lookAt(x, y, z);
   });
 
   useEffect(() => {
@@ -87,9 +87,10 @@ function handleMovement({ position, inputs }: handleMovementArgs) {
 }
 
 function Cube(props: BoxProps) {
-  const [meshRef] = useBox(() => ({ mass: 1, position: [0, 5, 0], ...props }));
+  const [meshRef, api] = useBox(() => ({ mass: 1, position: [0, 5, 0], ...props }));
   const { left, right, up, down } = usePlayerControls();
-  useCamera(meshRef);
+  const [position, setPosition] = useState([0, 0, 0]);
+  useCamera(position);
 
   useFrame(({ clock }) => {
     meshRef.current!.rotation.x = clock.getElapsedTime();
@@ -100,7 +101,13 @@ function Cube(props: BoxProps) {
       inputs: { left, right, up, down },
     });
     meshRef.current!.position.set(x, y, z);
+    api.applyImpulse([0.11, 0, 0], [0, 0, 0]);
   });
+
+  useEffect(() => {
+    api.position.subscribe((p) => setPosition([...p]));
+  }, [api.position]);
+
   return (
     <mesh ref={meshRef}>
       <boxGeometry />
