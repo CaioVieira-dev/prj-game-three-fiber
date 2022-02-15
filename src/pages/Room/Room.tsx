@@ -1,30 +1,31 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Canvas, useFrame, useThree, Vector3 } from '@react-three/fiber';
+import { Vector3 as ThreeVector3 } from 'three';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 // import { OrbitControls } from '@react-three/drei'
 import { Physics, usePlane, useBox, PlaneProps, BoxProps } from '@react-three/cannon';
 
 import './styles.scss';
 
-type controlsType = { left: Boolean; right: Boolean; up: Boolean; down: Boolean };
+// type controlsType = { left: Boolean; right: Boolean; forward: Boolean; backward: Boolean };
 
 const usePlayerControls = () => {
   const [left, setLeft] = useState(false);
   const [right, setRight] = useState(false);
-  const [up, setUp] = useState(false);
-  const [down, setDown] = useState(false);
+  const [forward, setForward] = useState(false);
+  const [backward, setBackward] = useState(false);
 
   useEffect(() => {
     function handleKeyDown(this: Document, e: KeyboardEvent) {
       e.code === 'KeyA' && setLeft(true);
       e.code === 'KeyD' && setRight(true);
-      e.code === 'KeyW' && setUp(true);
-      e.code === 'KeyS' && setDown(true);
+      e.code === 'KeyW' && setForward(true);
+      e.code === 'KeyS' && setBackward(true);
     }
     function handleKeyUp(this: Document, e: KeyboardEvent) {
       e.code === 'KeyA' && setLeft(false);
       e.code === 'KeyD' && setRight(false);
-      e.code === 'KeyW' && setUp(false);
-      e.code === 'KeyS' && setDown(false);
+      e.code === 'KeyW' && setForward(false);
+      e.code === 'KeyS' && setBackward(false);
     }
 
     document.addEventListener('keydown', handleKeyDown);
@@ -34,7 +35,7 @@ const usePlayerControls = () => {
       document.removeEventListener('keyup', handleKeyUp);
     };
   }, []);
-  return { left, right, up, down };
+  return { left, right, forward, backward };
 };
 
 function useCamera([x, y, z]: number[]) {
@@ -72,41 +73,63 @@ function useCamera([x, y, z]: number[]) {
       window.removeEventListener('resize', handleWindowResize);
     };
   }, []);
-}
-type handleMovementArgs = {
-  position: Vector3;
-  inputs: controlsType;
-};
 
-function handleMovement({ position, inputs }: handleMovementArgs) {
-  const newX: number = position.x + (inputs.left ? -0.1 : 0) + (inputs.right ? 0.1 : 0);
-  const newZ: number = position.z + (inputs.up ? -0.1 : 0) + (inputs.down ? 0.1 : 0);
-  const newY: number = position.y;
-
-  return { x: newX, y: newY, z: newZ };
+  return camera;
 }
+// type handleMovementArgs = {
+//   position: Vector3;
+//   inputs: controlsType;
+// };
+
+// function handleMovement({ position, inputs }: handleMovementArgs) {
+//   const newX: number = position.x + (inputs.left ? -0.1 : 0) + (inputs.right ? 0.1 : 0);
+//   const newZ: number = position.z + (inputs.up ? -0.1 : 0) + (inputs.down ? 0.1 : 0);
+//   const newY: number = position.y;
+
+//   return { x: newX, y: newY, z: newZ };
+// }
+
+const SPEED = 5;
 
 function Cube(props: BoxProps) {
   const [meshRef, api] = useBox(() => ({ mass: 1, position: [0, 5, 0], ...props }));
-  const { left, right, up, down } = usePlayerControls();
+  const { left, right, forward, backward } = usePlayerControls();
   const [position, setPosition] = useState([0, 0, 0]);
-  useCamera(position);
+  const [frontVector, setFrontVector] = useState(new ThreeVector3(0, 0, 0));
+  const [sideVector, setSideVector] = useState(new ThreeVector3(0, 0, 0));
+  const [direction, setDirection] = useState(new ThreeVector3());
+  const [speed, setSpeed] = useState(new ThreeVector3());
+  const velocity = useRef([0, 0, 0]);
+
+  const camera = useCamera(position);
 
   useFrame(({ clock }) => {
     meshRef.current!.rotation.x = clock.getElapsedTime();
     meshRef.current!.rotation.y = clock.getElapsedTime();
 
-    const { x, y, z } = handleMovement({
-      position: { x: meshRef.current!.position.x, y: meshRef.current!.position.y, z: meshRef.current!.position.z },
-      inputs: { left, right, up, down },
-    });
-    meshRef.current!.position.set(x, y, z);
-    api.applyImpulse([0.11, 0, 0], [0, 0, 0]);
+    setFrontVector(new ThreeVector3(0, 0, Number(backward) - Number(forward)));
+    setSideVector(new ThreeVector3(Number(left) - Number(right), 0, 0));
+
+    setDirection(
+      direction.subVectors(frontVector, sideVector).normalize().multiplyScalar(SPEED).applyEuler(camera.rotation)
+    );
+
+    setSpeed(speed.fromArray(velocity.current));
+    api.velocity.set(direction.x, velocity.current[1], direction.z);
+    // if (jump && Math.abs(velocity.current[1].toFixed(2)) < 0.05) api.velocity.set(velocity.current[0], 10, velocity.current[2])
+
+    // const { x, y, z } = handleMovement({
+    //   position: { x: meshRef.current!.position.x, y: meshRef.current!.position.y, z: meshRef.current!.position.z },
+    //   inputs: { left, right, forward, backward },
+    // });
+    // meshRef.current!.position.set(x, y, z);
+    // api.applyImpulse([0.1, 0, 0], [0, 0, 0]);
   });
 
   useEffect(() => {
     api.position.subscribe((p) => setPosition([...p]));
-  }, [api.position]);
+    api.velocity.subscribe((v) => (velocity.current = v));
+  }, [api.position, api.velocity]);
 
   return (
     <mesh ref={meshRef}>
