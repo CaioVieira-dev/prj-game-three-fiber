@@ -92,7 +92,7 @@ function useCamera([x, y, z]: number[]) {
 const SPEED = 5;
 
 function Cube(props: BoxProps) {
-  const [meshRef, api] = useBox(() => ({ mass: 1, position: [0, 5, 0], ...props }));
+  const [meshRef, api] = useBox(() => ({ mass: 1, position: [0, 5, 0], angularFactor: [0, 1, 0], ...props }));
   const { left, right, forward, backward } = usePlayerControls();
   const [position, setPosition] = useState([0, 0, 0]);
   const [frontVector, setFrontVector] = useState(new ThreeVector3(0, 0, 0));
@@ -116,6 +116,7 @@ function Cube(props: BoxProps) {
 
     setSpeed(speed.fromArray(velocity.current));
     api.velocity.set(direction.x, velocity.current[1], direction.z);
+    api.angularFactor.set(0, 1, 0);
     // if (jump && Math.abs(velocity.current[1].toFixed(2)) < 0.05) api.velocity.set(velocity.current[0], 10, velocity.current[2])
 
     // const { x, y, z } = handleMovement({
