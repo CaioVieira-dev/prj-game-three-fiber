@@ -50,9 +50,9 @@ function useCamera([x, y, z]: number[]) {
   });
 
   useFrame(() => {
-    const camX = Math.sin(cursor.current.x * Math.PI) * 5 + x;
-    const camZ = Math.cos(cursor.current.x * Math.PI) * 5 + z;
-    const camY = cursor.current.y * 3 + y;
+    const camX = Math.sin(cursor.current.x * Math.PI * 2) * 5 + x;
+    const camZ = Math.cos(cursor.current.x * Math.PI * 2) * 5 + z;
+    const camY = cursor.current.y * 3 + y + 2;
     camera.position.set(camX, camY, camZ);
     camera.lookAt(x, y, z);
   });
@@ -132,10 +132,21 @@ function Cube(props: BoxProps) {
     api.velocity.subscribe((v) => (velocity.current = v));
   }, [api.position, api.velocity]);
 
+  const facesColors = [
+    { face: 'right', color: 'white' },
+    { face: 'left', color: 'blue' },
+    { face: 'top', color: 'gray' },
+    { face: 'front', color: 'green' },
+    { face: 'back', color: 'purple' },
+    { face: 'bottom', color: 'gray' },
+  ];
+
   return (
     <mesh ref={meshRef}>
-      <boxGeometry />
-      <meshStandardMaterial />
+      <boxBufferGeometry attach="geometry" />
+      {facesColors.map(({ color, face }, index) => (
+        <meshStandardMaterial key={`cube_${face}.${index}`} attachArray="material" color={color} />
+      ))}
     </mesh>
   );
 }
@@ -155,7 +166,7 @@ export function Room() {
     <div className="canvas-container">
       <Canvas>
         <ambientLight intensity={0.1} />
-        <directionalLight color="red" position={[0, 3, 5]} />
+        <directionalLight color="white" position={[0, 3, 5]} />
         <Physics>
           <Cube args={[1, 1, 1]} />
           <Plane position={[0, -3, 0]} rotation={[-Math.PI / 2, 0, 0]} />
