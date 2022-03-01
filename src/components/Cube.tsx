@@ -34,6 +34,7 @@ export const Cube = (props: BoxProps) => {
     setSpeed(speed.fromArray(velocity.current));
     api.velocity.set(direction.x, velocity.current[1], direction.z);
     api.angularFactor.set(0, 1, 0);
+    api.rotation.set(0, camera.rotation.y, 0);
     // if (jump && Math.abs(velocity.current[1].toFixed(2)) < 0.05) api.velocity.set(velocity.current[0], 10, velocity.current[2])
 
     // const { x, y, z } = handleMovement({
